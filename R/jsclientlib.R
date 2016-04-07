@@ -315,16 +315,16 @@ js.client.unwatch.all <- function(){
 #'
 #' @param path Path to the file
 #'
-file.changed <- function( path ){
+file.changed <- function( filename, original_path ){
 	x<- lapply( .data.env$file.watches, function( watch ){
-		if( watch$path == path ){
+		if( watch$path == original_path ){
 			if( is.null( watch$func )){
-				.js.client.callback( "file.watch", list( command="reloading", path=path ));
-				source( path );
+				.js.client.callback( "file.watch", list( command="reloading", filename=filename, original_path=original_path ));
+				source( filename );
 			}
 			else {
-				.js.client.callback( "file.watch", list( command="executing", path=path ));
-				watch$func(path);
+				.js.client.callback( "file.watch", list( command="executing", filename=filename, original_path=original_path ));
+				watch$func(filename);
 			}
 		}
 	});
