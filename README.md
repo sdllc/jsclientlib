@@ -11,5 +11,6 @@ plus a generic callback mechanism.
 License
 -------
 
-GPLv2.
+GPL (>=2), see source for details.
+
 
