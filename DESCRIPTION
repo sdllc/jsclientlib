@@ -1,0 +1,14 @@
+Package: jsClientLib
+Type: Package
+Title: Tools for the JS front-end
+Version: 1.5.0
+Date: 2016-03-26
+Author: Duncan Werner
+Maintainer: Duncan Werner <dwerner@riskamp.com>
+Description: Tools for the JS front-end
+License: GPL (>= 2)
+Imports:
+    Rcpp (>= 0.12.3),
+    gdtools
+LinkingTo: Rcpp, gdtools
+RoxygenNote: 5.0.1.9000
