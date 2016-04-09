@@ -4,13 +4,15 @@
 \alias{js.client.add.watch}
 \title{Add a watch variable}
 \usage{
-js.client.add.watch(expr, func, envir = .GlobalEnv)
+js.client.add.watch(expr, func, label, envir = .GlobalEnv)
 }
 \arguments{
 \item{expr}{Any R expression, generally a field, function, or slice}
 
 \item{func}{The function used to render the field in the viewer.  Defaults
 to \code{print} for functions and \code{str} for everything else.}
+
+\item{label}{Optional label, defaults to \code{expr}.}
 
 \item{envir}{The environment in which to resolve \code{expr}. Defaults 
 to \code{.GlobalEnv}.}

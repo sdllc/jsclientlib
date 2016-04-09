@@ -4,7 +4,7 @@
 \alias{file.changed}
 \title{Notification when a watched file has changed.}
 \usage{
-file.changed(path)
+file.changed(filename, original_path)
 }
 \arguments{
 \item{path}{Path to the file}

@@ -126,11 +126,12 @@ watches <- function(){
 #' @param expr Any R expression, generally a field, function, or slice
 #' @param func The function used to render the field in the viewer.  Defaults
 #' to \code{print} for functions and \code{str} for everything else.
+#' @param label Optional label, defaults to \code{expr}.
 #' @param envir The environment in which to resolve \code{expr}. Defaults 
 #' to \code{.GlobalEnv}.
 #'
 #' @export
-js.client.add.watch <- function( expr, func, envir=.GlobalEnv ){
+js.client.add.watch <- function( expr, func, label, envir=.GlobalEnv ){
 	if( missing( func )){
 		
 		# NOTE: this resolves expr, which will throw an error
@@ -155,8 +156,13 @@ js.client.add.watch <- function( expr, func, envir=.GlobalEnv ){
 			func = toString( substitute( func ));
 		}
 	}
+	
+	if( missing(label)){
+		label = capture.output(print(substitute(expr)));
+	}
+	
 	tmp <- .data.env$watches;
-	tmp[[length(tmp)+1]] <- list( label=capture.output(print(substitute(expr))), expr=substitute(expr), func=func, envir=envir );
+	tmp[[length(tmp)+1]] <- list( label=label, expr=substitute(expr), func=func, envir=envir );
 	.data.env$watches <- tmp ;
 }
 
