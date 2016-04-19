@@ -78,6 +78,7 @@ locals <- function( envir ){
 	.js.client.callback( "locals", list(
 		fields = lapply( mget( ls(envir), envir=envir), function(a){ 
 			if( is.function(a)){ return(capture.print(a)); };
+			if( is.environment(a)){ return(capture.env(a)); };
 			return(capture.str(a)); 
 		}),
 		envir = capture.output(str(envir)))
@@ -229,6 +230,21 @@ capture.print <- function(x){ capture.output( print(x)); }
 #'
 #' @export
 capture.histogram <- function(x){ capture.output( print( hist(x, plot=F ))); }
+
+#'
+#' return output of \code{ls.str}
+#'
+#' calls \code{print} and returns output as a string.  this is a utility 
+#' function for use with watches in the js client.
+#'
+#' @param env an environment
+#' @return the output of \code{ls.str(x)}, as a string
+#' @seealso \code{\link{capture.print}}, \code{\link{capture.str}}, \code{\link{capture.histogram}}
+#'
+#' @export
+capture.env <- function( env ){
+	c( capture.output( print( env )), "", "Members:", "", paste0( " ", capture.output( print( ls.str(env)))));
+}
 
 #------------------------------------------------------------------------------
 # shell utilities
