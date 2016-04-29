@@ -279,6 +279,46 @@ quit <- function(...){
 }
 
 #------------------------------------------------------------------------------
+# options
+#------------------------------------------------------------------------------
+
+.js.client.options.env <- new.env();
+
+#'
+#' js.client.options controls options (preferences) in the shell application.
+#' it functions like \code{options()}; use list syntax to set values, and 
+#' names to get values.  Call with no arguments to list all options.
+#'
+#' @export
+js.client.options <- function(...) {
+
+	args <- list(...);
+	if( is.null( names(args))){
+		args <- unlist( args );
+		if( length( args ) == 0 ){
+			args <- unlist( ls( .js.client.options.env ));
+		}
+		sapply( args, function(a){
+			.js.client.options.env[[a]];
+		}, simplify=F, USE.NAMES=T );
+	}
+	else {
+		lapply( names( args ), function(n){
+			if( is.null( args[[n]] )){
+				if( exists( n, envir=.js.client.options.env )){
+					rm( list=c(n), envir=.js.client.options.env );
+				}
+			}
+			else {
+				assign( n, args[[n]], envir=.js.client.options.env );
+			}
+		});
+	}
+
+
+}
+
+#------------------------------------------------------------------------------
 # file watch api
 #
 # FIXME: use an environment (for storage).  simplifies semantics.
