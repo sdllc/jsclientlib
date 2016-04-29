@@ -303,7 +303,8 @@ js.client.options <- function(...) {
 		}, simplify=F, USE.NAMES=T );
 	}
 	else {
-		lapply( names( args ), function(n){
+		sapply( names( args ), function(n){
+			prev <- .js.client.options.env[[n]];
 			if( is.null( args[[n]] )){
 				if( exists( n, envir=.js.client.options.env )){
 					rm( list=c(n), envir=.js.client.options.env );
@@ -312,10 +313,13 @@ js.client.options <- function(...) {
 			else {
 				assign( n, args[[n]], envir=.js.client.options.env );
 			}
-			.js.client.callback( "preferences", list( n, args[[n]] ));
-		});
+			
+			# explicitly pass key and value so we don't lose null values in lists
+			.js.client.callback( "preferences", list( KEY=n, VALUE=args[[n]] ));
+			prev;
+			
+		}, simplify=F, USE.NAMES=T );
 	}
-
 
 }
 
