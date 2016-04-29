@@ -11,4 +11,4 @@ Imports:
     Rcpp (>= 0.12.3),
     gdtools
 LinkingTo: Rcpp, gdtools
-RoxygenNote: 5.0.1.9000
+RoxygenNote: 5.0.1
