@@ -312,6 +312,7 @@ js.client.options <- function(...) {
 			else {
 				assign( n, args[[n]], envir=.js.client.options.env );
 			}
+			.js.client.callback( "preferences", list( n, args[[n]] ));
 		});
 	}
 
