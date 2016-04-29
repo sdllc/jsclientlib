@@ -285,6 +285,8 @@ quit <- function(...){
 .js.client.options.env <- new.env();
 
 #'
+#' get and set client.options
+#'
 #' js.client.options controls options (preferences) in the shell application.
 #' it functions like \code{options()}; use list syntax to set values, and 
 #' names to get values.  Call with no arguments to list all options.

@@ -2,9 +2,7 @@
 % Please edit documentation in R/jsclientlib.R
 \name{js.client.options}
 \alias{js.client.options}
-\title{js.client.options controls options (preferences) in the shell application.
-it functions like \code{options()}; use list syntax to set values, and 
-names to get values.  Call with no arguments to list all options.}
+\title{get and set client.options}
 \usage{
 js.client.options(...)
 }
