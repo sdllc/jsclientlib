@@ -77,9 +77,10 @@ device.resize <- function( device, width, height, replay=T ){
 locals <- function( envir ){
 	.js.client.callback( "locals", list(
 		fields = lapply( mget( ls(envir), envir=envir), function(a){ 
-			if( is.function(a)){ return(capture.print(a)); };
-			if( is.environment(a)){ return(capture.env(a)); };
-			return(capture.str(a)); 
+			if( is.function(a)){ string.representation <- capture.print(a); }
+			else if( is.environment(a)){ string.representation <- capture.env(a); }
+			else { string.representation <- capture.str(a) }
+			list( value=string.representation, class=class(a));
 		}),
 		envir = capture.output(str(envir)))
 	);
@@ -111,6 +112,7 @@ watches <- function(){
 			tryCatch({
 				val <- eval( a$expr, envir=envir );
 				a$value <- do.call( a$func, list(val));
+				a$class <- class(a$expr);
 				if( !inherits( a$value, "character" )){ a$value <- capture.output( print( a$value )); }
 				return(a); 
 			}, error=function( cond ){ 
