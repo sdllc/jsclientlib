@@ -5,6 +5,18 @@
 
 using namespace Rcpp;
 
+// jsclient_callback_sync_
+SEXP jsclient_callback_sync_(SEXP data, bool buffer);
+RcppExport SEXP jsClientLib_jsclient_callback_sync_(SEXP dataSEXP, SEXP bufferSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< bool >::type buffer(bufferSEXP);
+    __result = Rcpp::wrap(jsclient_callback_sync_(data, buffer));
+    return __result;
+END_RCPP
+}
 // jsclient_callback_
 void jsclient_callback_(std::string channel, SEXP data, bool buffer);
 RcppExport SEXP jsClientLib_jsclient_callback_(SEXP channelSEXP, SEXP dataSEXP, SEXP bufferSEXP) {

@@ -40,6 +40,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
 
 #define PACKET_END "\n"
 
@@ -48,6 +49,7 @@ using namespace std;
 
 typedef void * CALLBACK_FN_JSON( const char *, const char *, bool );
 typedef void * CALLBACK_FN_SEXP( const char *, SEXP, bool );
+typedef SEXP CALLBACK_FN_SYNC( SEXP, bool );
 
 class JSGraphicsDevice {
 public:
@@ -499,6 +501,14 @@ pDevDesc js_device_new( rcolor bg, double width, double height, int pointsize) {
 
 	dd->deviceSpecific = new JSGraphicsDevice();
 	return dd;
+}
+
+// [[Rcpp::export]]
+SEXP jsclient_callback_sync_( SEXP data, bool buffer = false) 
+{
+	static CALLBACK_FN_SYNC *callback = (CALLBACK_FN_SYNC*)R_GetCCallable("ControlR", "CallbackSync");
+	if( callback ) return callback( data, buffer );
+	return R_NilValue;
 }
 
 // [[Rcpp::export]]

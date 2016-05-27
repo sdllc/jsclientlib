@@ -491,3 +491,6 @@ close.js.client.progress.bar <- function( pb ){
 		PACKAGE = 'jsClientLib', channel, data, buffer))
 }
 
+.js.client.callback.sync <- function(data, buffer = FALSE) {
+    .Call('jsClientLib_jsclient_callback_sync_', PACKAGE = 'jsClientLib', data, buffer)
+}
