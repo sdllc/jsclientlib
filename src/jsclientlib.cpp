@@ -117,6 +117,21 @@ inline std::string fontname(const char* family_, int face) {
 		return family;
 	}
 
+#elif __APPLE__
+
+	if( family == "mono" ) {
+		return "Menlo";
+	}
+	else if (family == "serif") {
+		return "Georgia";
+	} 
+	else if (family == "sans" || family == "") {
+		return "Helvetica Neue"; 
+	} 
+	else {
+		return family;
+	}
+
 #else // #ifdef WIN32
 
 	if (family == "mono") {
