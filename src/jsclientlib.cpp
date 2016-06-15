@@ -29,8 +29,10 @@
  */
  
 #include <Rcpp.h>
-#include <gdtools.h>
 #include <R_ext/GraphicsEngine.h>
+
+#include "lodepng.h"
+#include "base64.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,10 +53,12 @@ typedef void * CALLBACK_FN_JSON( const char *, const char *, bool );
 typedef void * CALLBACK_FN_SEXP( const char *, SEXP, bool );
 typedef SEXP CALLBACK_FN_SYNC( SEXP, bool );
 
+// fwd
+SEXP jsclient_callback_sync_( SEXP data, bool buffer = false); 
+
 class JSGraphicsDevice {
 public:
 	CALLBACK_FN_JSON *callback;
-	XPtrCairoContext cc;
 	int page;
   	int device;
 		  
@@ -63,8 +67,7 @@ public:
 	JSGraphicsDevice() : 
 		page(0), 
 		device(0),
-		callback(0),
-		cc(gdtools::context_create()) {
+		callback(0) {
 			callback = (CALLBACK_FN_JSON*)R_GetCCallable("ControlR", "CallbackJSON");
 			if( !callback ){
 				cout << "ERR: can't find callback pointer" << endl;
@@ -213,13 +216,48 @@ const char * write_style_linetype( const pGEcontext gc, int filled) {
   
 }
 
+const char * fontdesc( const pGEcontext gc ){
+
+	static char fontdesc[512];
+	
+	sprintf( fontdesc, "%s%s%.2fpx '%s'", 
+		is_italic(gc->fontface) ? "italic " : "",
+		is_bold(gc->fontface) ? "bold " : "",
+		gc->cex * gc->ps,
+		fontname(gc->fontfamily, gc->fontface).c_str()
+	);
+	
+	return fontdesc;
+
+}
+
+std::vector< double > string_to_double_vector( const char * str ){
+
+	char *end;
+	char *dup = strdup(str);
+	std::vector< double > vec;
+	char *token = strtok( dup, "," );
+	while( token ){
+		double tokenvalue = strtod( token, &end );
+		cout << "TOKEN: " << token << ", " << tokenvalue << endl;
+		vec.push_back( tokenvalue );
+		token = strtok( 0, "," );
+	}
+	free( dup );
+	return vec;
+
+}
+
 void get_metric_info( int c, const pGEcontext gc, double* ascent,
 						double* descent, double* width, pDevDesc dd) {
+
+	static char str[8];
+
+	// this one can almost certainly do some caching.
 
 	JSGraphicsDevice *pd = (JSGraphicsDevice*)dd->deviceSpecific;						 
 
 	// Convert to string - negative implies unicode code point
-	char str[16];
 	if (c < 0) {
 		Rf_ucstoutf8(str, (unsigned int) -c);
 	} else {
@@ -227,13 +265,31 @@ void get_metric_info( int c, const pGEcontext gc, double* ascent,
 		str[1] = '\0';
 	}
 
-	gdtools::context_set_font(pd->cc, fontname(gc->fontfamily, gc->fontface),
-		gc->cex * gc->ps, is_bold(gc->fontface), is_italic(gc->fontface));
-	FontMetric fm = gdtools::context_extents(pd->cc, std::string(str));
+	SEXP list = PROTECT( Rf_allocVector(STRSXP, 3));
+	SEXP names = PROTECT( Rf_allocVector(STRSXP, 3));
 
-	*ascent = fm.ascent;
-	*descent = fm.descent;
-	*width = fm.width;
+	SET_STRING_ELT( list, 0, Rf_mkChar("font-metrics"));
+	SET_STRING_ELT( list, 1, Rf_mkChar( str ));
+	SET_STRING_ELT( list, 2, Rf_mkChar( fontdesc(gc) ));
+
+	SET_STRING_ELT( names, 0, Rf_mkChar("command"));
+	SET_STRING_ELT( names, 1, Rf_mkChar("text"));
+	SET_STRING_ELT( names, 2, Rf_mkChar("font"));
+	
+	Rf_setAttrib( list, R_NamesSymbol, names );
+	SEXP sexp = PROTECT( jsclient_callback_sync_( list ));
+
+	if( sexp && Rf_isString( sexp )){
+		std::vector< double > dx = string_to_double_vector(CHAR(STRING_ELT(sexp, 0)));
+		cout << "len? " << dx.size() << endl;
+		if( dx.size() > 2 ){
+			*ascent = dx[0];
+			*descent = dx[1];
+			*width = dx[2];
+		}
+	}
+
+    UNPROTECT(3);
 
 }
 
@@ -333,10 +389,32 @@ void draw_path(double *x, double *y,
 
 double get_strWidth(const char *str, const pGEcontext gc, pDevDesc dd) {
 	JSGraphicsDevice *pd = (JSGraphicsDevice*) dd->deviceSpecific;
-	gdtools::context_set_font(pd->cc, fontname(gc->fontfamily, gc->fontface),
-		gc->cex * gc->ps, is_bold(gc->fontface), is_italic(gc->fontface));
-	FontMetric fm = gdtools::context_extents(pd->cc, std::string(str));
-	return fm.width;
+
+	// TODO: maybe this is overoptimizing, but we can probably
+	// do some memoization here: undoubtedly we're checking the
+	// same strings and fonts over and over
+
+	double width = 0;
+
+	SEXP list = PROTECT( Rf_allocVector(STRSXP, 3));
+	SEXP names = PROTECT( Rf_allocVector(STRSXP, 3));
+
+	SET_STRING_ELT( list, 0, Rf_mkChar("measure-text"));
+	SET_STRING_ELT( list, 1, Rf_mkChar( str ));
+	SET_STRING_ELT( list, 2, Rf_mkChar( fontdesc(gc) ));
+
+	SET_STRING_ELT( names, 0, Rf_mkChar("command"));
+	SET_STRING_ELT( names, 1, Rf_mkChar("text"));
+	SET_STRING_ELT( names, 2, Rf_mkChar("font"));
+	
+	Rf_setAttrib( list, R_NamesSymbol, names );
+	SEXP sexp = PROTECT( jsclient_callback_sync_( list ));
+
+	if( sexp ) width = Rf_asReal( sexp );
+
+    UNPROTECT(3);
+
+	return width;
 }
 
 void draw_rect(double x1, double y1, double x2, double y2,
@@ -383,14 +461,6 @@ void draw_text(double x, double y, const char *str, double rot,
 	JSGraphicsDevice *pd = (JSGraphicsDevice*) dd->deviceSpecific;
 	std::ostringstream os;
 
-	static char fontdesc[512];
-	sprintf( fontdesc, "%s%s%.2fpx %s", 
-		is_italic(gc->fontface) ? "italic " : "",
-		is_bold(gc->fontface) ? "bold " : "",
-		gc->cex * gc->ps,
-		fontname(gc->fontfamily, gc->fontface).c_str()
-	);
-
 	// escape the string suitable for utf8 json -- just 
 	// quotes, I think (and slashes?)
 
@@ -406,7 +476,7 @@ void draw_text(double x, double y, const char *str, double rot,
 		<< x << ", \"y\": " << y << ", \"rot\": " << rot 
 		<< ", \"text\": \"" 
 		<< escaped << "\", \"font\": \""
-		<< fontdesc << "\", \"fill\": \""
+		<< fontdesc(gc) << "\", \"fill\": \""
 		<< rgba(gc->col) << "\" }} ";
 
 	pd->write(os.str().c_str());
@@ -420,32 +490,48 @@ void get_size( double *left, double *right, double *bottom, double *top, pDevDes
 	*top = dd->top;
 }
 
-void draw_raster(unsigned int *raster, int w, int h,
-                double x, double y,
-                double width, double height,
-                double rot,
-                Rboolean interpolate,
-                const pGEcontext gc, pDevDesc dd) {
-						 
+void draw_raster(unsigned int *raster, 
+				 int pixel_width, int pixel_height,
+                 double x, double y,
+                 double target_width, double target_height,
+                 double rot,
+                 Rboolean interpolate,
+                 const pGEcontext gc, pDevDesc dd) {
+
+	// rot we can ignore; pass that to the client.  for our purposes
+	// we will return the image at the original size; the client can
+	// scale up.  (not sure which one is more efficient, but since 
+	// the client is _rendering_, we should allow it to do all rendering
+	// ops.  we are _encoding_.)
+
 	JSGraphicsDevice *pd = (JSGraphicsDevice*)dd->deviceSpecific;						 
 	std::ostringstream os;
-						 
-	if (height < 0) height = -height;
 
-	std::vector<unsigned int> raster_(w*h);
-	for (std::vector<unsigned int>::size_type i = 0 ; i < raster_.size(); ++i) {
-		raster_[i] = raster[i] ;
-	}
+	// ? just let this pass...
 
-	std::string base64_str = gdtools::raster_to_str(raster_, w, h, width, height, (Rboolean)interpolate);
+	if (target_height < 0) target_height = -target_height;
+
+	// raster data is 32-bit RGBA, although passed as int.  should be 
+	// safe to cast (famous last words).
+
+	std::string base64_str;
+	std::vector<unsigned char> png;
+	const unsigned char *pixels = (unsigned char*) raster;
+	unsigned error = lodepng::encode( png, pixels, pixel_width, pixel_height );
+
+	if( !error ) base64_str = base64_encode( reinterpret_cast< unsigned char* >(png.data()), png.size());
 
 	os << "{\"cmd\": \"img\", \"device\": " << pd->device << ", \"data\":{ \"x\": "
 		<< x << ", \"y\": " << y 
 		<< ", \"rot\": " << rot 
-		<< ", \"width\": " << width
-		<< ", \"height\": " << height
-		<< ", \"dataURL\": \"data:image/png;base64," 
-		<< base64_str << "\" }} ";
+		<< ", \"width\": " << target_width
+		<< ", \"height\": " << target_height;
+
+	if( !error ){		
+		os << ", \"dataURL\": \"data:image/png;base64," << base64_str << "\"";
+	}
+	
+	os << " }} ";
 
 	pd->write(os.str().c_str());
 
@@ -519,7 +605,7 @@ pDevDesc js_device_new( rcolor bg, double width, double height, int pointsize) {
 }
 
 // [[Rcpp::export]]
-SEXP jsclient_callback_sync_( SEXP data, bool buffer = false) 
+SEXP jsclient_callback_sync_( SEXP data, bool buffer) 
 {
 	static CALLBACK_FN_SYNC *callback = (CALLBACK_FN_SYNC*)R_GetCCallable("ControlR", "CallbackSync");
 	if( callback ) return callback( data, buffer );
