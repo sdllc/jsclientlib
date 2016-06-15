@@ -239,7 +239,6 @@ std::vector< double > string_to_double_vector( const char * str ){
 	char *token = strtok( dup, "," );
 	while( token ){
 		double tokenvalue = strtod( token, &end );
-		cout << "TOKEN: " << token << ", " << tokenvalue << endl;
 		vec.push_back( tokenvalue );
 		token = strtok( 0, "," );
 	}
@@ -281,7 +280,6 @@ void get_metric_info( int c, const pGEcontext gc, double* ascent,
 
 	if( sexp && Rf_isString( sexp )){
 		std::vector< double > dx = string_to_double_vector(CHAR(STRING_ELT(sexp, 0)));
-		cout << "len? " << dx.size() << endl;
 		if( dx.size() > 2 ){
 			*ascent = dx[0];
 			*descent = dx[1];
