@@ -219,8 +219,8 @@ const char * write_style_linetype( const pGEcontext gc, int filled) {
 const char * fontdesc( const pGEcontext gc ){
 
 	static char fontdesc[512];
-	
-	sprintf( fontdesc, "%s%s%.2fpx '%s'", 
+
+	sprintf( fontdesc, "%s%s%.2fpx %s", 
 		is_italic(gc->fontface) ? "italic " : "",
 		is_bold(gc->fontface) ? "bold " : "",
 		gc->cex * gc->ps,
