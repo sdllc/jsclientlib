@@ -177,10 +177,28 @@ const char *rgba( rcolor col ){
 
 }
 
+/**
+ * update: the style block is changed to look like this:
+ *
+ * style: {
+ *   fill: string, 
+ *   stroke: {
+ *	   color: string, linewidth: num, cap: string, join: string
+ *   }
+ * }
+ * 
+ * with both fill and stroke being optional, and missing meaning
+ * "don't fill" or "don't stroke".  instead of missing you can
+ * set them to null, which might be easier to construct (but which
+ * will waste processing time)
+ *
+ * actually, no you can't.  but you could set them to 0 or something,
+ * which will test as false.  or false.
+ */
 const char * write_style_linetype( const pGEcontext gc, int filled) {
 
-	static char buffer[512];
-	static char fill[64];
+	static char buffer[256];
+	static char fill[128];
 
 	const char BUTT[] = "butt";
 	const char ROUND[] = "round";
@@ -191,27 +209,37 @@ const char * write_style_linetype( const pGEcontext gc, int filled) {
 	const char *pcap = ROUND;
 	const char *pjoin = ROUND;
 
-	switch(gc->lend)
-	{
-	case GE_BUTT_CAP: pcap = BUTT; break;
-	case GE_SQUARE_CAP: pcap = SQUARE; break;
-	}
+	bool stroke = false;
 
-	switch(gc->ljoin)
-	{
-	case GE_BEVEL_JOIN: pjoin = BEVEL; break;
-	case GE_MITRE_JOIN: pjoin = MITRE; break;
+	if( gc->col == NA_INTEGER || R_ALPHA(gc->col) == 0) {
+		sprintf( buffer, "{ ");
+	} 
+	else {
+
+		stroke = true;
+
+		switch(gc->lend)
+		{
+		case GE_BUTT_CAP: pcap = BUTT; break;
+		case GE_SQUARE_CAP: pcap = SQUARE; break;
+		}
+
+		switch(gc->ljoin)
+		{
+		case GE_BEVEL_JOIN: pjoin = BEVEL; break;
+		case GE_MITRE_JOIN: pjoin = MITRE; break;
+		}
+
+		sprintf( buffer, "{ \"stroke\": { \"linewidth\": %01.02f, \"color\": \"%s\", \"cap\": \"%s\", \"join\": \"%s\" } ", 
+			gc->lwd / 96 * 72, rgba(gc->col), pcap, pjoin );
+		
 	}
 
 	if( filled && is_filled(gc->fill)){
-		sprintf( fill, ", \"fill\": \"%s\"", rgba(gc->fill) );
+		sprintf( fill, "%s \"fill\": \"%s\" }", stroke ? "," : "", rgba(gc->fill));
 	}
-	else fill[0] = 0;
-
-	sprintf( buffer, "{ \"linewidth\": %01.02f, \"color\": \"%s\", \"cap\": \"%s\", \"join\": \"%s\"%s}", 
-		gc->lwd / 96 * 72,
-		rgba(gc->col),
-		pcap, pjoin, fill );
+	else sprintf( fill, " } ");
+	strcat( buffer, fill );
 
 	return buffer;
   
@@ -254,8 +282,6 @@ void get_metric_info( int c, const pGEcontext gc, double* ascent,
 	static char str[8];
 
 	// this one can almost certainly do some caching.
-
-	JSGraphicsDevice *pd = (JSGraphicsDevice*)dd->deviceSpecific;						 
 
 	// Convert to string - negative implies unicode code point
 	if (c < 0) {
@@ -387,7 +413,6 @@ void draw_path(double *x, double *y,
 }
 
 double get_strWidth(const char *str, const pGEcontext gc, pDevDesc dd) {
-	JSGraphicsDevice *pd = (JSGraphicsDevice*) dd->deviceSpecific;
 
 	// TODO: maybe this is overoptimizing, but we can probably
 	// do some memoization here: undoubtedly we're checking the
