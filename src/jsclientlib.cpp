@@ -28,7 +28,9 @@
  *
  */
  
-#include <Rcpp.h>
+#include <Rconfig.h>
+#include <Rinternals.h>
+#include <R_ext/Rdynload.h>
 #include <R_ext/GraphicsEngine.h>
 
 #include "lodepng.h"
@@ -46,7 +48,6 @@
 
 #define PACKET_END "\n"
 
-using namespace Rcpp;
 using namespace std;
 
 typedef void * CALLBACK_FN_JSON( const char *, const char *, bool );
@@ -645,18 +646,15 @@ int jsclient_device_( std::string name, std::string background, int width, int h
 	R_GE_checkVersionOrDie(R_GE_version);
 	R_CheckDeviceAvailable();
 
-	BEGIN_SUSPEND_INTERRUPTS {
-		pDevDesc dev = js_device_new(bg, width, height, pointsize);
-		if (dev == NULL) Rcpp::stop("Failed to create device");
-		pGEDevDesc gd = GEcreateDevDesc(dev);
-		GEaddDevice2(gd, name.c_str());
-		GEinitDisplayList(gd);
-		device = GEdeviceNumber(gd) + 1; // to match what R says
-		((JSGraphicsDevice*)(dev->deviceSpecific))->setDevice(device);
-		// cout << "device number: " << device << endl;
-  } END_SUSPEND_INTERRUPTS;
+	pDevDesc dev = js_device_new(bg, width, height, pointsize);
+	pGEDevDesc gd = GEcreateDevDesc(dev);
+	GEaddDevice2(gd, name.c_str());
+	GEinitDisplayList(gd);
+	device = GEdeviceNumber(gd) + 1; // to match what R says
+	((JSGraphicsDevice*)(dev->deviceSpecific))->setDevice(device);
+	// cout << "device number: " << device << endl;
 
-  return device;
+	return device;
   
 }
 

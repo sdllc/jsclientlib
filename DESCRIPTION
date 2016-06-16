@@ -8,6 +8,5 @@ Maintainer: Duncan Werner <dwerner@riskamp.com>
 Description: Tools for the JS front-end
 License: GPL (>= 2)
 Imports:
-    Rcpp (>= 0.12.3)
-LinkingTo: Rcpp
+LinkingTo: 
 RoxygenNote: 5.0.1
