@@ -57,6 +57,12 @@ typedef SEXP CALLBACK_FN_SYNC( SEXP, bool );
 // fwd
 SEXP jsclient_callback_sync_( SEXP data, bool buffer = false); 
 
+// this is handy, but it doesn't support unbalanced quotes.
+#define LITERAL(...) #__VA_ARGS__
+
+// so we'll define one we can concatenate
+#define QUOTE "\""
+
 class JSGraphicsDevice {
 public:
 	CALLBACK_FN_JSON *callback;
@@ -74,7 +80,7 @@ public:
 				cout << "ERR: can't find callback pointer" << endl;
 			}
 			else {
-				this->write( "{ \"cmd\": \"status\", \"data\": { \"msg\": \"registered graphics device\" }}" );
+				this->write( LITERAL({ "cmd": "status", "data": { "msg": "registered graphics device" }}) );
 			}
 	}
 	
@@ -230,13 +236,13 @@ const char * write_style_linetype( const pGEcontext gc, int filled) {
 		case GE_MITRE_JOIN: pjoin = MITRE; break;
 		}
 
-		sprintf( buffer, "{ \"stroke\": { \"linewidth\": %01.02f, \"color\": \"%s\", \"cap\": \"%s\", \"join\": \"%s\" } ", 
+		sprintf( buffer, LITERAL({ "stroke": { "linewidth": %01.02f, "color": "%s", "cap": "%s", "join": "%s" }), 
 			gc->lwd / 96 * 72, rgba(gc->col), pcap, pjoin );
 		
 	}
 
 	if( filled && is_filled(gc->fill)){
-		sprintf( fill, "%s \"fill\": \"%s\" }", stroke ? "," : "", rgba(gc->fill));
+		sprintf( fill, LITERAL( %s "fill": "%s" }), stroke ? "," : "", rgba(gc->fill));
 	}
 	else sprintf( fill, " } ");
 	strcat( buffer, fill );
@@ -332,11 +338,11 @@ void new_page(const pGEcontext gc, pDevDesc dd) {
 
 	std::ostringstream os;
 	
-	os << "{ \"cmd\": \"new-page\", \"device\": " << pd->device << ", \"data\": { \"page\": "
-		<< pd->page << ", \"height\": "
-		<< fixed << (double)(dd->bottom) << ", \"width\": "
-		<< fixed << (double)(dd->right) << ", \"background\": \""
-		<< rgba(dd->startfill) << "\" }}" ;
+	os << LITERAL({ "cmd": "new-page", "device": ) << pd->device 
+		<< LITERAL(, "data": { "page": ) << pd->page 
+		<< LITERAL(, "height": ) << fixed << (double)(dd->bottom) 
+		<< LITERAL(, "width": ) << fixed << (double)(dd->right) 
+		<< LITERAL(, "background": ) QUOTE << rgba(dd->startfill) << QUOTE LITERAL( }} );
 
 	pd->write(os.str().c_str());
 
@@ -350,7 +356,8 @@ void close_device(pDevDesc dd) {
 	JSGraphicsDevice *pd = (JSGraphicsDevice*) dd->deviceSpecific;
 	std::ostringstream os;
 	
-	os << "{ \"cmd\": \"status\", \"device\": " << pd->device << ", \"data\": { \"msg\": \"closing graphics device\" }}";
+	os << LITERAL({ "cmd": "status", "device": ) << pd->device 
+		<< LITERAL(, "data": { "msg": "closing graphics device" }} );
 	
 	pd->write( os.str().c_str() );
 	delete pd;
@@ -362,14 +369,13 @@ void draw_line(double x1, double y1, double x2, double y2, const pGEcontext gc, 
 	JSGraphicsDevice *pd = (JSGraphicsDevice*) dd->deviceSpecific;
 	std::ostringstream os;
 	
-	os << "{ \"cmd\": \"line\", \"device\": " << pd->device << ", \"data\": "
-		<< "{ \"x1\": " << x1 
-		<< ", \"y1\": " << y1
-		<< ", \"x2\": " << x2
-		<< ", \"y2\": " << y2 
-		<< ", \"style\": " <<
-		write_style_linetype(gc, false)
-		<< "}}";
+	os << LITERAL({ "cmd": "line", "device": ) << pd->device 
+		<< LITERAL(, "data": )
+		<< LITERAL({ "x1": ) << x1 
+		<< LITERAL(, "y1": ) << y1 
+		<< LITERAL(, "x2": ) << x2 
+		<< LITERAL(, "y2": ) << y2 
+		<< LITERAL(, "style": ) << write_style_linetype(gc, false) << LITERAL( }} );
 
 	pd->write(os.str().c_str());
 
@@ -466,12 +472,13 @@ void draw_circle(double x, double y, double r, const pGEcontext gc,
 	JSGraphicsDevice *pd = (JSGraphicsDevice*) dd->deviceSpecific;
 	std::ostringstream os;
 	
-	os << "{ \"cmd\": \"circle\", \"device\": " << pd->device << ", \"data\": "
-		<< "{ \"x\": " << x 
-		<< ", \"y\": " << y
-		<< ", \"r\": " << r
-		<< ", \"style\": " <<
-		write_style_linetype(gc, true)
+	os << LITERAL({ "cmd": "circle", "device": ) << pd->device 
+		<< LITERAL(, "data": )
+		<< LITERAL({ "x": ) << x 
+		<< LITERAL(, "y": ) << y 
+		<< LITERAL(, "r": ) << r 
+		<< LITERAL(, "style": ) 
+		<< write_style_linetype( gc, true )
 		<< "}}";
 
 	pd->write(os.str().c_str());
@@ -496,12 +503,15 @@ void draw_text(double x, double y, const char *str, double rot,
 		escaped += str[i];
 	}
 		
-	os << "{\"cmd\": \"text\", \"device\": " << pd->device << ", \"data\":{ \"x\": "
-		<< x << ", \"y\": " << y << ", \"rot\": " << rot 
-		<< ", \"text\": \"" 
-		<< escaped << "\", \"font\": \""
-		<< fontdesc(gc) << "\", \"fill\": \""
-		<< rgba(gc->col) << "\" }} ";
+	os << LITERAL({ "cmd": "text", "device": ) << pd->device 
+		<< LITERAL(, "data": { "x": ) << x 
+		<< LITERAL(, "y": ) << y 
+		<< LITERAL(, "rot": ) << rot 
+		<< LITERAL(, "text": ) QUOTE << escaped << QUOTE
+		<< LITERAL(, "font": ) QUOTE << fontdesc(gc) << QUOTE
+		<< LITERAL(, "fill": ) QUOTE << rgba(gc->col) << QUOTE LITERAL( }} )
+
+	;
 
 	pd->write(os.str().c_str());
 	
@@ -552,7 +562,7 @@ void draw_raster(unsigned int *raster,
 		<< ", \"height\": " << target_height;
 
 	if( !error ){		
-		os << ", \"dataURL\": \"data:image/png;base64," << base64_str << "\"";
+		os << ", \"dataURL\": \"data:image/png;base64," << base64_str << QUOTE;
 	}
 	
 	os << " }} ";
@@ -562,7 +572,7 @@ void draw_raster(unsigned int *raster,
 }
 
 /**
- * constructor
+ * constructor, sets default options.  see [1]
  */
 pDevDesc js_device_new( rcolor bg, double width, double height, int pointsize) {
 
@@ -628,7 +638,15 @@ pDevDesc js_device_new( rcolor bg, double width, double height, int pointsize) {
 	return dd;
 }
 
-// [[Rcpp::export]]
+//=============================================================================
+//
+// exported functions 
+//
+//=============================================================================
+
+/**
+ * sync callback function: returns a response as a SEXP
+ */
 SEXP jsclient_callback_sync_( SEXP data, bool buffer) 
 {
 	static CALLBACK_FN_SYNC *callback = (CALLBACK_FN_SYNC*)R_GetCCallable("ControlR", "CallbackSync");
@@ -636,14 +654,18 @@ SEXP jsclient_callback_sync_( SEXP data, bool buffer)
 	return R_NilValue;
 }
 
-// [[Rcpp::export]]
+/**
+ * async callback function
+ */
 void jsclient_callback_( std::string channel, SEXP data, bool buffer = false) 
 {
 	static CALLBACK_FN_SEXP *callback = (CALLBACK_FN_SEXP*)R_GetCCallable("ControlR", "CallbackSEXP");
 	if( callback ) callback( channel.c_str(), data, buffer );
 }
 
-// [[Rcpp::export]]
+/**
+ * resize the graphics device, and optionally call replay
+ */
 void jsclient_device_resize_( int device, int width, int height, bool replay ) 
 {
 	// FIXME: should check it's indeed our device
@@ -662,7 +684,9 @@ void jsclient_device_resize_( int device, int width, int height, bool replay )
 	
 }
 
-// [[Rcpp::export]]
+/**
+ * create graphics device, add to display list 
+ */ 
 int jsclient_device_( std::string name, std::string background, int width, int height, int pointsize) 
 {
 	rcolor bg = R_GE_str2col(background.c_str());
@@ -677,6 +701,7 @@ int jsclient_device_( std::string name, std::string background, int width, int h
 	GEinitDisplayList(gd);
 	device = GEdeviceNumber(gd) + 1; // to match what R says
 	((JSGraphicsDevice*)(dev->deviceSpecific))->setDevice(device);
+
 	// cout << "device number: " << device << endl;
 
 	return device;
