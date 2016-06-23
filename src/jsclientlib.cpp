@@ -33,6 +33,10 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/GraphicsEngine.h>
 
+#ifdef length
+#undef length
+#endif
+
 #include "lodepng.h"
 #include "base64.h"
 
