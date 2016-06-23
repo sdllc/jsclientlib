@@ -112,53 +112,14 @@ inline std::string fontname(const char* family_, int face) {
 	std::string family(family_);
 	if (face == 5) return "symbol";
 
-#ifdef WIN32
+	// we will pass symbolic names through, the client can
+	// do translation if desired.  should be more flexible.
+	// do clean up though.
 
-	if (family == "mono") {
-		return "Consolas"; 
-	} 
-	else if (family == "serif") {
-		return "Palatino";
-	} 
-	else if (family == "sans" || family == "") {
-		return "Segoe UI"; 
-	} 
-	else {
-		return family;
-	}
+	if( family == "mono" ) return "monospace";
+	if (family == "sans" || family == "") return "sans serif"; // default?
+	return family;
 
-#elif __APPLE__
-
-	if( family == "mono" ) {
-		return "Menlo";
-	}
-	else if (family == "serif") {
-		return "Georgia";
-	} 
-	else if (family == "sans" || family == "") {
-		return "Helvetica Neue"; 
-	} 
-	else {
-		return family;
-	}
-
-#else // #ifdef WIN32
-
-	if (family == "mono") {
-		return "Monospace"; 
-	} 
-	else if (family == "serif") {
-		return "Serif";
-	} 
-	else if (family == "sans" || family == "") {
-		return "Sans Serif"; 
-	} 
-	else {
-		return family;
-	}
-
-#endif // #ifdef WIN32	
-    
 }
 
 const char *rgba( rcolor col ){

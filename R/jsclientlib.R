@@ -339,15 +339,17 @@ js.client.options <- function(...) {
 #'
 #' Watch a file and reload (or execute some arbitrary code) when the file changes.
 #'
-#' @param path Path to the file
+#' @param path Path to the file.  we will call \code{normalizePath}.
 #' @param FUNC Code to execute when the file changes.  Defaults to \code{source(path)}.
 #' @param override Remove any prior file watches.  You might add two separate watches
 #' that execute different functions when a file changes; this is supported, unless the 
 #' \code{override} parameter is set. Defaults to True.
 #'
 #' @export
-js.client.watch.file <- function( path, FUNC=NULL, override=T ){
+js.client.watch.file <- function( path, FUNC=NULL, override=T, source.now=F ){
+	path = normalizePath(path);
 	if( !override ){ unwatch.file( path ); }
+	if( source.now ){ source(path); }
 	tmp <- .data.env$file.watches;
 	tmp[[length(tmp)+1]] <- list( path=path, func=FUNC );
 	.data.env$file.watches <- tmp ;
