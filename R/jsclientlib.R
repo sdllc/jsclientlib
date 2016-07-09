@@ -76,10 +76,12 @@ device.resize <- function( device, width, height, replay=T ){
 locals <- function( envir ){
 	.js.client.callback( "locals", list(
 		fields = lapply( mget( ls(envir), envir=envir), function(a){ 
+            alt.representation <- NULL;
 			if( is.function(a)){ string.representation <- capture.print(a); }
 			else if( is.environment(a)){ string.representation <- capture.env(a); }
 			else { string.representation <- capture.str(a) }
-			list( value=string.representation, class=class(a));
+            if( is.numeric(a)){ alt.representation = hist(a, plot=F); }
+			list( value=string.representation, alt=alt.representation, class=class(a));
 		}),
 		envir = capture.output(str(envir)))
 	);
