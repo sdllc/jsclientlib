@@ -81,7 +81,7 @@ locals <- function( envir ){
 			else { string.representation <- capture.str(a) }
 			rslt <- list( value=string.representation, class=class(a));
 
-            if( is.numeric(a)){ rslt$histogram = hist(a, plot=F); }
+            if( is.numeric(a) && ( length(a) > 0 )){ rslt$histogram = hist(a, plot=F); }
             rslt;
 		}),
 		envir = capture.output(str(envir)))
@@ -206,7 +206,7 @@ js.client.clear.watches <- function(){
 #' @seealso \code{\link{capture.print}}, \code{\link{capture.histogram}}
 #'
 #' @export
-capture.str <- function(x){ capture.output( str(x)); }
+capture.str <- function(x){ capture.output( str(x, give.head=F)); }
 
 #'
 #' return output of \code{print}
