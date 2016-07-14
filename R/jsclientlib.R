@@ -116,6 +116,7 @@ watches <- function(){
 				a$value <- do.call( a$func, list(val));
 				a$class <- class(val);
 				if( !inherits( a$value, "character" )){ a$value <- capture.output( print( a$value )); }
+                if( is.numeric( val )){ a$histogram = hist(val, plot=F); }
 				return(a); 
 			}, error=function( cond ){ 
 				a$err <- toString(cond); 

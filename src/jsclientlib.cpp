@@ -597,6 +597,7 @@ pDevDesc js_device_new( rcolor bg, double width, double height, int pointsize) {
     dd->displayListOn = TRUE;
     dd->haveTransparency = 2;
     dd->haveTransparentBg = 2;
+    
     dd->haveRaster = 3; // yes, except for missing values
 
     dd->deviceSpecific = new JSGraphicsDevice();
