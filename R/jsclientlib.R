@@ -81,7 +81,7 @@ locals <- function( envir ){
 			else { string.representation <- capture.str(a) }
 			rslt <- list( value=string.representation, class=class(a));
 
-            if( is.numeric(a) && ( length(a) > 0 )){ rslt$histogram = hist(a, plot=F); }
+            if( is.numeric(a) && ( length(a) > 1 )){ rslt$histogram = hist(a, plot=F); }
             rslt;
 		}),
 		envir = capture.output(str(envir)))
@@ -116,7 +116,7 @@ watches <- function(){
 				a$value <- do.call( a$func, list(val));
 				a$class <- class(val);
 				if( !inherits( a$value, "character" )){ a$value <- capture.output( print( a$value )); }
-                if( is.numeric( val )){ a$histogram = hist(val, plot=F); }
+                if( is.numeric( val ) && (length(val) > 1 )){ a$histogram = hist(val, plot=F); }
 				return(a); 
 			}, error=function( cond ){ 
 				a$err <- toString(cond); 
