@@ -170,6 +170,10 @@ js.client.add.watch <- function( expr, func, label, envir=.GlobalEnv ){
 	tmp <- .data.env$watches;
 	tmp[[length(tmp)+1]] <- list( label=label, expr=substitute(expr), func=func, envir=envir );
 	.data.env$watches <- tmp ;
+
+    # notify the client so it can pop open a view (if desired)
+    .js.client.callback( "add-watch", as.list( environment()));
+
 }
 
 #'
