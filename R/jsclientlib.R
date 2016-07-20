@@ -172,7 +172,9 @@ js.client.add.watch <- function( expr, func, label, envir=.GlobalEnv ){
 	.data.env$watches <- tmp ;
 
     # notify the client so it can pop open a view (if desired)
-    .js.client.callback( "add-watch", as.list( environment()));
+    # .js.client.callback( "add-watch", as.list( environment()));
+
+    .js.client.callback( "add-watch", label );
 
 }
 
