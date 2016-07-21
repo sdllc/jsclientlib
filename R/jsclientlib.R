@@ -79,8 +79,8 @@ locals <- function( envir ){
 			if( is.function(a)){ string.representation <- capture.print(a); }
 			else if( is.environment(a)){ string.representation <- capture.env(a); }
 			else { string.representation <- capture.str(a) }
-			rslt <- list( value=string.representation, class=class(a));
-
+			rslt <- list( value=string.representation, class=class(a), size=dim(a));
+            if( is.null( rslt$size )){ rslt$size <- length(a); };
             if( is.numeric(a) && ( length(a) > 1 )){ rslt$histogram = hist(a, plot=F); }
             rslt;
 		}),
@@ -115,6 +115,8 @@ watches <- function(){
 				val <- eval( a$expr, envir=envir );
 				a$value <- do.call( a$func, list(val));
 				a$class <- class(val);
+                a$size <- dim(val);
+                if( is.null( a$size )){ a$size <- length(val); }
 				if( !inherits( a$value, "character" )){ a$value <- capture.output( print( a$value )); }
                 if( is.numeric( val ) && (length(val) > 1 )){ a$histogram = hist(val, plot=F); }
 				return(a); 
