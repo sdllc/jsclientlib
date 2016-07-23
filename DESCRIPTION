@@ -1,8 +1,8 @@
 Package: jsClientLib
 Type: Package
 Title: Tools for the JS front-end
-Version: 1.11.5
-Date: 2016-05-03
+Version: 2.0.1
+Date: 2016-07-23
 Author: Duncan Werner
 Maintainer: Duncan Werner <dwerner@riskamp.com>
 Description: Tools for the JS front-end

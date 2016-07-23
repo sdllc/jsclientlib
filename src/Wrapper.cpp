@@ -1,8 +1,6 @@
 
 //
-// replacement for Rcpp exports file (Rcpp was removed 
-// only to reduce deps, although Rcpp is a lot lighter
-// than gdtools)
+// replacement for Rcpp exports file (Rcpp was removed to minimize deps)
 //
 // TODO: raise errors where appropriate
 // TODO: validate parameters 
